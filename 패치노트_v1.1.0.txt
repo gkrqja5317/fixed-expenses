@@ -1,0 +1,12 @@
+내 고정지출 v1.1.0 패치 노트
+
+- 현재 버전(v1.1.0) 표시 및 새 버전 업데이트 알림
+- 은행별 지출 비중 도넛 그래프 추가
+- 사용 목적: 여가 추가
+- 목록 정렬: 금액 높은순/낮은순 추가
+- 월 고정지출 총합 금액 숨기기/보기 추가 (설정 유지)
+
+데이터 보존: 기존 localStorage 키 fixedExpenseApp_v1 그대로 사용.
+새 버전 배포: ZIP 압축 해제 후 모든 파일과 icons 폴더를 GitHub 저장소 루트에 덮어 업로드하고 Commit changes.
+주의: 이미 저장된 개인 지출 자료는 ZIP에 포함되지 않습니다. 변경 전 앱에서 JSON 백업을 권장합니다.
+추가 업데이트마다 index.html의 APP_VERSION, version.json의 version, sw.js의 CACHE를 함께 증가시키세요.
