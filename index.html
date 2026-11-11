@@ -9,7 +9,7 @@
 .versionline{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px;font-size:12px;color:#b9c8e0}.versionline button{color:#dbe6ff;background:#283950;border:1px solid #566682;padding:7px 11px;border-radius:9px}.metric-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.eye-btn{border:1px solid #52647b;background:#27374d;color:#fff;border-radius:11px;padding:8px 11px;font-size:13px}.update-banner{background:#e9f0ff;border:1px solid #b8cafb;color:#193b87;padding:12px 14px;border-radius:14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px}.update-banner button{border:0;border-radius:10px;background:#3568ec;color:white;padding:9px 11px;font-weight:700;white-space:nowrap}.bank-chart{display:grid;place-items:center;gap:12px;padding:4px 0 12px}.donut{width:176px;height:176px;border-radius:50%;position:relative;display:grid;place-items:center;background:#e9edf4}.donut::before{content:'';position:absolute;inset:30px;border-radius:50%;background:white}.donut-center{position:relative;z-index:1;font-size:12px;color:#61708a;text-align:center}.donut-center strong{display:block;color:#172238;font-size:17px;margin-top:5px}.legendline{display:flex;align-items:center;gap:8px}.legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}.sort-select{font-size:13px;color:#435575;background:white;border:1px solid #dce4ef;border-radius:10px;padding:8px;max-width:135px}
 
 /* v1.2: four-tab, small-screen-first PWA layout */
-.app{padding-bottom:calc(148px + env(safe-area-inset-bottom))}
+.app{padding-bottom:calc(220px + env(safe-area-inset-bottom))}
 .tabnav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;position:sticky;top:0;z-index:9;background:#fff;border-bottom:1px solid #e1e7f1;padding:9px 10px;box-shadow:0 3px 12px rgba(22,32,55,.04)}
 .tab{border:0;background:transparent;border-radius:11px;color:#52617b;padding:12px 2px;font-weight:700;font-size:13px;white-space:nowrap}
 .tab.active{background:#17253d;color:#fff}
@@ -42,16 +42,21 @@
 .home-chart-section .bar{height:6px}
 .home-chart-section .empty{font-size:11px;padding:10px 2px}
 @media(min-width:480px){.home-charts{gap:14px}.home-chart-section .card{padding:16px}.home-chart-section .donut{width:162px}.home-chart-section .barinfo{flex-direction:row;font-size:12px}.home-chart-section .barinfo strong:last-child{font-size:12px}}
+
+/* v1.2.0: bottom navigation, swipe between panels, compact fixed actions */
+.bottom{padding:8px max(10px,env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
+.bottom-inner{gap:6px}
+.bottom-backups{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.bottom-backups .secondary{padding:9px 3px;font-size:11px;white-space:nowrap}
+.bottom .primary{padding:11px;font-size:14px}
+.bottom .tabnav{position:static;top:auto;z-index:auto;background:transparent;border-bottom:0;border-top:1px solid #e1e7f1;box-shadow:none;padding:5px 0 1px;gap:3px}
+.bottom .tab{padding:11px 1px;font-size:12px}
+.tab-panel{touch-action:pan-y}
+@media(min-width:700px){.bottom .tabnav{border-radius:0}}
 </style>
 </head>
 <body>
 <div class="app">
-<nav class="tabnav" role="tablist" aria-label="지출 화면 선택">
-<button class="tab active" role="tab" aria-selected="true" aria-controls="tab-home" id="tabbtn-home" data-tab="home">홈</button>
-<button class="tab" role="tab" aria-selected="false" aria-controls="tab-bank" id="tabbtn-bank" data-tab="bank">은행별</button>
-<button class="tab" role="tab" aria-selected="false" aria-controls="tab-purpose" id="tabbtn-purpose" data-tab="purpose">목적별</button>
-<button class="tab" role="tab" aria-selected="false" aria-controls="tab-list" id="tabbtn-list" data-tab="list">전체 목록</button>
-</nav>
 <div class="update-banner hidden" id="updateBanner" role="status"><span id="updateMessage">새 버전이 있습니다.</span><button type="button" id="applyUpdate">업데이트</button></div>
 <div id="tab-home" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-home">
 <header class="hero"><div class="eyebrow">MONTHLY FIXED EXPENSES</div><h1>내 고정지출</h1><div class="metric-head"><div class="metric-label">매달 나가는 고정지출</div><button class="eye-btn" type="button" id="toggleTotal" aria-pressed="false">금액 숨기기</button></div><div class="total" id="grandTotal">0원</div><div class="submetric" id="totalCount">등록된 항목 0개</div><div class="versionline"><span id="versionText">현재 버전 v1.2.0</span><button type="button" id="checkUpdate">업데이트 확인</button></div></header>
@@ -63,7 +68,12 @@
 <section><div class="heading"><h2>목적별 지출 목록</h2><select id="purposeSortSelect" class="sort-select" aria-label="목적별 목록 정렬"><option value="dayAsc">결제일순</option><option value="dayDesc">결제일 역순</option><option value="amountDesc">고액순</option><option value="amountAsc">저액순</option></select></div><div class="filter" id="purposeFilters"></div><div class="card" id="purposeExpenses"></div></section></main></div>
 <div id="tab-list" class="tab-panel hidden" role="tabpanel" aria-labelledby="tabbtn-list"><main><section><div class="heading"><h2>전체 고정지출 목록</h2><select id="sortSelect" class="sort-select" aria-label="전체 목록 정렬"><option value="dayAsc">결제일순</option><option value="dayDesc">결제일 역순</option><option value="amountDesc">고액순</option><option value="amountAsc">저액순</option></select></div><div class="filter" id="filters"></div><div class="card" id="expenses"></div></section></main></div>
 </div>
-<div class="bottom"><div class="bottom-inner"><div class="bottom-backups"><button class="secondary" id="exportBtn" type="button">↓ 백업 저장</button><button class="secondary" id="importBtn" type="button">↑ 백업 불러오기</button><input id="importFile" type="file" accept=".json,application/json" class="hidden"/></div><button class="primary" id="addBtn" type="button">＋ 고정지출 추가</button></div></div>
+<div class="bottom"><div class="bottom-inner"><div class="bottom-backups"><button class="secondary" id="exportBtn" type="button">↓ 백업 저장</button><button class="secondary" id="importBtn" type="button">↑ 백업 불러오기</button><button class="secondary" id="shareBtn" type="button" aria-label="총 고정지출 금액 공유">↗ 금액 공유</button><input id="importFile" type="file" accept=".json,application/json" class="hidden"/></div><button class="primary" id="addBtn" type="button">＋ 고정지출 추가</button><nav class="tabnav" role="tablist" aria-label="지출 화면 선택">
+<button class="tab active" role="tab" aria-selected="true" aria-controls="tab-home" id="tabbtn-home" data-tab="home">홈</button>
+<button class="tab" role="tab" aria-selected="false" aria-controls="tab-bank" id="tabbtn-bank" data-tab="bank">은행별</button>
+<button class="tab" role="tab" aria-selected="false" aria-controls="tab-purpose" id="tabbtn-purpose" data-tab="purpose">목적별</button>
+<button class="tab" role="tab" aria-selected="false" aria-controls="tab-list" id="tabbtn-list" data-tab="list">전체 목록</button>
+</nav></div></div>
 <div class="overlay" id="overlay" role="presentation"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="formTitle"><div class="row"><h2 id="formTitle">고정지출 추가</h2><button type="button" class="iconbtn" id="closeBtn" aria-label="닫기">✕</button></div><form id="expenseForm" class="formgrid"><label class="field">지출 이름<input id="title" required maxlength="60" placeholder="예: 넷플릭스, 휴대폰 요금"/></label><label class="field">은행/카드<input id="bank" required maxlength="40" list="bankOptions" placeholder="예: 국민은행, 신한카드"/><datalist id="bankOptions"><option value="국민은행"><option value="신한은행"><option value="우리은행"><option value="하나은행"><option value="카카오뱅크"><option value="토스뱅크"><option value="농협은행"><option value="신한카드"><option value="현대카드"><option value="삼성카드"></datalist></label><label class="field">사용 목적<select id="purpose" required><option value="주거">주거</option><option value="통신">통신</option><option value="구독">구독</option><option value="보험">보험</option><option value="교통">교통</option><option value="저축">저축</option><option value="대출">대출</option><option value="교육">교육</option><option value="생활">생활</option><option value="여가">여가</option><option value="기타">기타</option></select></label><label class="field">지출 금액 (원)<input id="amount" inputmode="numeric" type="number" min="1" step="1" required placeholder="예: 15000"/></label><label class="field">매월 결제일 (1~31일)<input id="day" inputmode="numeric" type="number" min="1" max="31" required value="1"/></label><label class="toggle"><input id="active" type="checkbox" checked/> 현재 지출 중 (월 합계에 포함)</label><div class="note">29~31일로 설정한 경우 해당 날짜가 없는 달에는 마지막 날 결제하는 것으로 표시됩니다.</div><div class="buttons"><button type="button" class="secondary" id="cancelBtn">취소</button><button type="submit" class="primary">저장</button></div></form></div></div>
 <script>
 (()=>{'use strict';
@@ -97,6 +107,37 @@ drawList('bankExpenses',expenses.filter(x=>bankFilter==='전체'||x.bank===bankF
 drawList('purposeExpenses',expenses.filter(x=>purposeFilter==='전체'||x.purpose===purposeFilter),purposeSort)}
 function activateTab(id){tab=id;for(const btn of document.querySelectorAll('[data-tab]')){const selected=btn.dataset.tab===id;btn.classList.toggle('active',selected);btn.setAttribute('aria-selected',String(selected));btn.tabIndex=selected?0:-1}for(const panel of document.querySelectorAll('.tab-panel'))panel.classList.toggle('hidden',panel.id!=='tab-'+id);window.scrollTo({top:0,behavior:'instant'})}
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>activateTab(b.dataset.tab)));
+
+// Swipe: navigate only for deliberate horizontal gestures on the active panel.
+const TAB_ORDER=['home','bank','purpose','list'];let touchOrigin=null;
+const swipeExcluded=el=>!!el.closest('button,input,select,textarea,a,.filter,.sheet,[contenteditable="true"]');
+for(const panel of document.querySelectorAll('.tab-panel')){
+ panel.addEventListener('touchstart',event=>{
+  if(event.touches.length!==1||swipeExcluded(event.target)||$('overlay').classList.contains('open')){touchOrigin=null;return}
+  const point=event.touches[0];touchOrigin={x:point.clientX,y:point.clientY,time:Date.now(),panel:panel.id};
+ },{passive:true});
+ panel.addEventListener('touchend',event=>{
+  if(!touchOrigin||touchOrigin.panel!==panel.id||event.changedTouches.length!==1){touchOrigin=null;return}
+  const point=event.changedTouches[0],dx=point.clientX-touchOrigin.x,dy=point.clientY-touchOrigin.y;
+  touchOrigin=null;
+  if(Math.abs(dx)<65||Math.abs(dx)<Math.abs(dy)*1.35)return;
+  const idx=TAB_ORDER.indexOf(tab),next=idx+(dx<0?1:-1);
+  if(next>=0&&next<TAB_ORDER.length)activateTab(TAB_ORDER[next]);
+ },{passive:true});
+ panel.addEventListener('touchcancel',()=>{touchOrigin=null},{passive:true});
+}
+// Share only the aggregate monthly amount: no bank names, item titles or backup data.
+$('shareBtn').addEventListener('click',async()=>{
+ const total=expenses.filter(item=>item.active).reduce((sum,item)=>sum+item.amount,0);
+ const message=`내 월 고정지출 합계: ${fmt(total)}`;
+ if(hiddenTotal&&!confirm('숨겨둔 총 고정지출 금액을 공유하시겠습니까?'))return;
+ try{
+  if(navigator.share){await navigator.share({title:'월 고정지출 합계',text:message});return}
+  if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(message);alert('총 고정지출 금액을 복사했습니다. 친구에게 붙여넣어 보내세요.');return}
+  window.prompt('아래 내용을 복사해서 공유하세요.',message);
+ }catch(error){if(error?.name!=='AbortError')window.prompt('아래 내용을 복사해서 공유하세요.',message)}
+});
+
 function show(item){editing=item?item.id:null;$('formTitle').textContent=item?'고정지출 수정':'고정지출 추가';$('expenseForm').reset();$('title').value=item?.title||'';$('bank').value=item?.bank||'';$('purpose').value=item?.purpose||'주거';$('amount').value=item?.amount||'';$('day').value=item?.day||1;$('active').checked=item?item.active:true;$('overlay').classList.add('open');$('title').focus()}
 function hide(){$('overlay').classList.remove('open');editing=null}
 $('expenseForm').addEventListener('submit',e=>{e.preventDefault();const item={id:editing||((crypto.randomUUID&&crypto.randomUUID())||String(Date.now())+Math.random()),title:$('title').value.trim(),bank:$('bank').value.trim(),purpose:$('purpose').value,amount:Number($('amount').value),day:Number($('day').value),active:$('active').checked};if(!item.title||!item.bank||!Number.isSafeInteger(item.amount)||item.amount<=0||!Number.isInteger(item.day)||item.day<1||item.day>31){alert('입력한 내용을 확인하세요.');return}const prior=[...expenses];if(editing)expenses=expenses.map(x=>x.id===editing?item:x);else expenses.push(item);if(!save()){expenses=prior;return}hide();render()});
