@@ -1,15 +1,11 @@
-내 고정지출 PWA 설치 안내
+내 고정지출 v1.2.0 업데이트
+1. 현재 앱에서 백업 저장 (권장)
+2. 이 ZIP의 압축을 해제
+3. 기존 GitHub 저장소 fixed-expenses > Add file > Upload files
+4. index.html, sw.js, version.json, manifest.webmanifest, icons 폴더 등을 저장소 최상위에 덮어쓰기
+5. Commit changes → GitHub Pages 자동 배포
+6. 갤럭시에서 설치된 앱을 다시 실행. 구버전이면 앱 종료 후 재실행 또는 업데이트 확인
 
-1. 이 폴더 안의 모든 파일(index.html, manifest.webmanifest, sw.js, icons 폴더)을 동일한 웹사이트 경로에 업로드합니다.
-2. 추천: GitHub에서 공개 저장소 생성 -> Add file > Upload files -> 파일 업로드 -> Settings > Pages -> Deploy from a branch -> main / (root) -> Save.
-3. 표시되는 https://사용자명.github.io/저장소명/ 주소를 휴대폰에서 엽니다.
-4. 갤럭시: Chrome 메뉴 > 홈 화면에 추가 / 앱 설치.
-   아이폰: Safari 공유 메뉴 > 홈 화면에 추가 > 웹 앱으로 열기(표시되는 경우) > 추가.
-5. 한번 온라인으로 열면 이후 오프라인에서도 실행 가능합니다.
-
-주의
-- 앱에 입력하는 금액은 웹 서버로 전송되지 않고 해당 기기의 브라우저 저장소(localStorage)에 기록됩니다.
-- HTML 파일(file://)에서 쓰던 데이터와 새 HTTPS 주소의 데이터는 별개입니다. 기존 앱에서 '백업'을 한 뒤 PWA에서 '복원'하세요.
-- 다른 휴대폰과 자동 동기화되지는 않습니다. 기기를 바꾸기 전 백업 파일을 보관하세요.
-- 브라우저의 사이트 데이터 또는 설치된 앱 데이터 삭제 시 내역이 사라질 수 있습니다.
-- GitHub Pages는 공개 배포 방식입니다. HTML/JS에 개인정보나 비밀번호를 넣지 마세요. 지출 정보는 공개 저장소에 업로드하지 마세요.
+데이터 저장 키: fixedExpenseApp_v1 (이전 버전과 동일)
+백업 형식: fixed-expenses / version 1 (이전 버전과 동일)
+주의: 앱 제거/사이트 데이터 삭제 시 입력 내역이 사라질 수 있음
