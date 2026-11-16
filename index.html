@@ -53,13 +53,17 @@
 .bottom .tab{padding:11px 1px;font-size:12px}
 .tab-panel{touch-action:pan-y}
 @media(min-width:700px){.bottom .tabnav{border-radius:0}}
+.push-settings{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px;color:#b9c8e0;font-size:12px}
+.push-settings button{color:#dbe6ff;background:#283950;border:1px solid #566682;padding:7px 11px;border-radius:9px}
+.push-settings button:disabled{opacity:.6;cursor:wait}
 </style>
+<script src="./push-config.js"></script>
 </head>
 <body>
 <div class="app">
 <div class="update-banner hidden" id="updateBanner" role="status"><span id="updateMessage">새 버전이 있습니다.</span><button type="button" id="applyUpdate">업데이트</button></div>
 <div id="tab-home" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-home">
-<header class="hero"><div class="eyebrow">MONTHLY FIXED EXPENSES</div><h1>내 고정지출</h1><div class="metric-head"><div class="metric-label">매달 나가는 고정지출</div><button class="eye-btn" type="button" id="toggleTotal" aria-pressed="false">금액 숨기기</button></div><div class="total" id="grandTotal">0원</div><div class="submetric" id="totalCount">등록된 항목 0개</div><div class="versionline"><span id="versionText">현재 버전 v1.2.0</span><button type="button" id="checkUpdate">업데이트 확인</button></div></header>
+<header class="hero"><div class="eyebrow">MONTHLY FIXED EXPENSES</div><h1>내 고정지출</h1><div class="metric-head"><div class="metric-label">매달 나가는 고정지출</div><button class="eye-btn" type="button" id="toggleTotal" aria-pressed="false">금액 숨기기</button></div><div class="total" id="grandTotal">0원</div><div class="submetric" id="totalCount">등록된 항목 0개</div><div class="versionline"><span id="versionText">현재 버전 v1.2.0</span><button type="button" id="checkUpdate">업데이트 확인</button></div><div class="push-settings hidden" id="pushSettings"><span id="pushStatus" role="status">알림 상태 확인 중</span><button type="button" id="togglePush">알림 켜기</button></div></header>
 <main class="home-main"><div class="home-charts"><section class="home-chart-section"><div class="heading"><h2>은행별 지출</h2></div><div class="card"><div id="homeBankChart" class="bank-chart"></div><div class="stack" id="homeBanks"></div></div></section>
 <section class="home-chart-section"><div class="heading"><h2>목적별 지출</h2></div><div class="card"><div id="homePurposeChart" class="bank-chart"></div><div class="stack" id="homePurposes"></div></div></section></div></main></div>
 <div id="tab-bank" class="tab-panel hidden" role="tabpanel" aria-labelledby="tabbtn-bank"><main><section><div class="heading"><h2>은행별 지출</h2><span class="mini">월 기준</span></div><div class="card"><div id="bankChart" class="bank-chart"></div><div class="stack" id="banks"></div></div></section>
@@ -152,4 +156,50 @@ load();render();activateTab('home');})();
 // Online version check and service-worker update notification.
 (()=>{'use strict';const APP_VERSION='1.2.0';let pendingWorker=null,latestVersion=null;const $=id=>document.getElementById(id);function showUpdate(label){$('updateMessage').textContent=label;$('updateBanner').classList.remove('hidden')}
 async function checkUpdate(manual=false){if(!navigator.onLine){if(manual)alert('인터넷 연결이 필요합니다.');return}try{const response=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});if(!response.ok)throw Error('version fetch failed');const obj=await response.json();if(typeof obj.version==='string'&&obj.version!==APP_VERSION){latestVersion=obj.version;showUpdate('새 버전 v'+obj.version+'이 있습니다. 업데이트해 주세요.')}else if(!pendingWorker){latestVersion=null;$('updateBanner').classList.add('hidden');if(manual)alert('현재 최신 버전(v'+APP_VERSION+')입니다.')}}catch{if(manual)alert('업데이트 정보를 확인할 수 없습니다. 네트워크를 확인하세요.')}if('serviceWorker' in navigator){navigator.serviceWorker.getRegistration().then(reg=>{if(reg){reg.update().catch(()=>{});if(reg.waiting){pendingWorker=reg.waiting;showUpdate('앱 업데이트가 준비되었습니다.')}}}).catch(()=>{})}}
-$('checkUpdate').onclick=()=>checkUpdate(true);$('applyUpdate').onclick=()=>{if(pendingWorker){pendingWorker.postMessage({type:'SKIP_WAITING'});setTimeout(()=>location.reload(),1300)}else location.reload()};if('serviceWorker' in navigator){navigator.serviceWorker.addEventListener('controllerchange',()=>{showUpdate('새 앱 버전이 적용되었습니다. 새로고침해 주세요.')});navigator.serviceWorker.ready.then(reg=>{if(reg.waiting){pendingWorker=reg.waiting;showUpdate('앱 업데이트가 준비되었습니다.')}reg.addEventListener('updatefound',()=>{const worker=reg.installing;if(worker)worker.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller){pendingWorker=worker;showUpdate('앱 업데이트가 준비되었습니다.')}})})}).catch(()=>{})}window.addEventListener('online',()=>checkUpdate(false));document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate(false)});window.addEventListener('load',()=>setTimeout(()=>checkUpdate(false),800));})();</script><script>if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.warn)); }</script></body></html>
+$('checkUpdate').onclick=()=>checkUpdate(true);$('applyUpdate').onclick=()=>{if(pendingWorker){pendingWorker.postMessage({type:'SKIP_WAITING'});setTimeout(()=>location.reload(),1300)}else location.reload()};if('serviceWorker' in navigator){navigator.serviceWorker.addEventListener('controllerchange',()=>{showUpdate('새 앱 버전이 적용되었습니다. 새로고침해 주세요.')});navigator.serviceWorker.ready.then(reg=>{if(reg.waiting){pendingWorker=reg.waiting;showUpdate('앱 업데이트가 준비되었습니다.')}reg.addEventListener('updatefound',()=>{const worker=reg.installing;if(worker)worker.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller){pendingWorker=worker;showUpdate('앱 업데이트가 준비되었습니다.')}})})}).catch(()=>{})}window.addEventListener('online',()=>checkUpdate(false));document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate(false)});window.addEventListener('load',()=>setTimeout(()=>checkUpdate(false),800));})();</script><script>if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.warn)); }</script><script>
+(()=>{'use strict';
+ const appId=window.FIXED_EXPENSES_PUSH_APP_ID;
+ if(!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(appId||''))return;
+ if(!('serviceWorker' in navigator)||!('Notification' in window))return;
+ const panel=document.getElementById('pushSettings'),state=document.getElementById('pushStatus'),button=document.getElementById('togglePush');
+ panel.classList.remove('hidden');button.disabled=true;state.textContent='알림 서비스 연결 중';
+ let sdk=null;
+ const refresh=()=>{
+   if(!sdk)return;
+   const on=Notification.permission==='granted'&&sdk.User.PushSubscription.optedIn;
+   state.textContent=Notification.permission==='denied'?'휴대폰 설정에서 알림이 차단됨':on?'업데이트 알림 수신 중':'업데이트 알림 꺼짐';
+   button.textContent=on?'알림 끄기':'알림 켜기';button.disabled=false;
+ };
+ const script=document.createElement('script');script.src='https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';script.defer=true;
+ script.onerror=()=>{state.textContent='알림 서비스 연결 실패';button.disabled=true};
+ window.OneSignalDeferred=window.OneSignalDeferred||[];
+ window.OneSignalDeferred.push(async OneSignal=>{
+   try{
+     await OneSignal.init({
+       appId,
+       serviceWorkerPath:'/fixed-expenses/push/OneSignalSDKWorker.js',
+       serviceWorkerParam:{scope:'/fixed-expenses/push/'},
+       notifyButton:{enable:false}
+     });
+     sdk=OneSignal;
+     sdk.User.PushSubscription.addEventListener('change',refresh);
+     sdk.Notifications.addEventListener('permissionChange',refresh);
+     refresh();
+   }catch(error){console.error('Push init failed',error);state.textContent='알림 설정 확인 필요';button.disabled=true}
+ });
+ document.head.appendChild(script);
+ button.addEventListener('click',async()=>{
+   if(!sdk)return;
+   button.disabled=true;
+   try{
+     if(sdk.User.PushSubscription.optedIn)await sdk.User.PushSubscription.optOut();
+     else{
+       if(Notification.permission==='denied'){alert('갤럭시 설정에서 앱 알림을 허용해 주세요.');return}
+       await sdk.Notifications.requestPermission();
+       if(Notification.permission==='granted')await sdk.User.PushSubscription.optIn();
+     }
+   }catch(error){console.error('Push permission error',error);alert('알림 설정에 실패했습니다. 인터넷 연결과 권한을 확인해 주세요.')}
+   finally{refresh()}
+ });
+})();
+</script></body></html>
