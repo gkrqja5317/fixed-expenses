@@ -177,8 +177,8 @@ $('checkUpdate').onclick=()=>checkUpdate(true);$('applyUpdate').onclick=()=>{if(
    try{
      await OneSignal.init({
        appId,
-       serviceWorkerPath:'/fixed-expenses/push/OneSignalSDKWorker.js',
-       serviceWorkerParam:{scope:'/fixed-expenses/push/'},
+       serviceWorkerPath:'/fixed-expenses/sw.js',
+       serviceWorkerParam:{scope:'/fixed-expenses/'},
        notifyButton:{enable:false}
      });
      sdk=OneSignal;
