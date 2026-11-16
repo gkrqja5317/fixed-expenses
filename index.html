@@ -171,7 +171,7 @@ $('checkUpdate').onclick=()=>checkUpdate(true);$('applyUpdate').onclick=()=>{if(
    button.textContent=on?'알림 끄기':'알림 켜기';button.disabled=false;
  };
  const script=document.createElement('script');script.src='https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';script.defer=true;
- script.onerror=()=>{state.textContent='알림 연결 실패 · 인터넷 확인';button.disabled=false;button.textContent='다시 시도'};
+ script.onerror=()=>{state.textContent='알림 오류: OneSignal 스크립트 다운로드 실패';button.disabled=false;button.textContent='다시 시도'};
  window.OneSignalDeferred=window.OneSignalDeferred||[];
  window.OneSignalDeferred.push(async OneSignal=>{
    try{
@@ -185,7 +185,7 @@ $('checkUpdate').onclick=()=>checkUpdate(true);$('applyUpdate').onclick=()=>{if(
      sdk.User.PushSubscription.addEventListener('change',refresh);
      sdk.Notifications.addEventListener('permissionChange',refresh);
      refresh();
-   }catch(error){console.error('Push init failed',error);state.textContent='알림 연결 실패 · 다시 시도';button.disabled=false;button.textContent='다시 시도';button.title=String(error?.message||error)}
+   }catch(error){console.error('Push init failed',error);state.textContent='알림 오류: '+String(error?.message||error).slice(0,180);button.disabled=false;button.textContent='다시 시도';button.title=String(error?.message||error)}
  });
  document.head.appendChild(script);
  button.addEventListener('click',async()=>{
