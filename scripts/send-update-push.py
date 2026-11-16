@@ -24,7 +24,7 @@ summary = str(notes[0]) if isinstance(notes,list) and notes else '새 기능 및
 body={
   'app_id':APP_ID,
   'target_channel':'push',
-  'included_segments':['Subscribed Users'],
+  'included_segments':['All'],
   'headings':{'en':'내 고정지출 업데이트'},
   'contents':{'en':'새 업데이트가 적용되었습니다. '+summary[:90]},
   'url':SITE
