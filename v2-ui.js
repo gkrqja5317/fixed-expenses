@@ -36,13 +36,19 @@ exitAccept.addEventListener('click',()=>{
  // A standalone PWA cannot always close itself via script. Try the direct close
  // first; then leave the history guard and use the browser's native back behavior.
  window.close();
- history.go(-2);
+ history.back();
 });
 const appUrl=location.pathname+location.search; // No tab hash history.
 history.replaceState({fixedBase:true},'',appUrl);
 history.pushState({fixedBackGuard:true},'',appUrl);
 window.addEventListener('popstate',()=>{
- if(exiting)return;
+ if(exiting){
+  // Once the temporary guard has been removed, allow the native PWA back
+  // action from the base entry. Closing a PWA by script remains browser-dependent.
+  window.close();
+  history.back();
+  return;
+ }
  if(!exitModal.classList.contains('hidden'))cancelExit();
  else if(!closeTop())showExit();
  // Re-arm the same guard without accumulating per-tab browser history.
