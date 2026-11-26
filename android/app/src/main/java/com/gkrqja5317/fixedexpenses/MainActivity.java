@@ -51,9 +51,12 @@ public class MainActivity extends Activity {
         + "document.getElementById(button)?.click();return true;}}"
         + "const cancel=document.getElementById('exitCancel'),accept=document.getElementById('exitAccept');"
         + "if(!d||!cancel||!accept||typeof d.showModal!=='function')return false;"
-        + "cancel.onclick=(e)=>{e.stopImmediatePropagation();d.close();};"
-        + "accept.onclick=(e)=>{e.stopImmediatePropagation();d.close();window.prompt('" + EXIT_PROMPT + "');};"
-        + "d.showModal();cancel.focus();return true;})()";
+        + "if(!d.dataset.androidExitBound){d.dataset.androidExitBound='true';"
+        + "d.addEventListener('click',e=>{"
+        + "const button=e.target.closest('button');if(button!==cancel&&button!==accept)return;"
+        + "e.stopImmediatePropagation();d.close();"
+        + "if(button===accept)window.prompt('" + EXIT_PROMPT + "');},true);}"
+        + "d.showModal();cancel.focus({preventScroll:true});return true;})()";
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
