@@ -1,10 +1,10 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-// A single guard entry intercepts Android Back; tab visits never create history.
-let exiting=false;
+// Do not use tab visit history. Handle Back as an in-app close request.
 const exitModal=$('exitConfirm');
 const exitCancel=$('exitCancel'),exitAccept=$('exitAccept');
+let exitApproved=false, closeWatcher=null;
 const activeLayer=()=>{
  if(!$('v2Picker').classList.contains('hidden'))return 'picker';
  if(!$('incomeModal').classList.contains('hidden'))return 'income';
@@ -14,7 +14,8 @@ const activeLayer=()=>{
  return null;
 };
 function closeTop(){
- const name=activeLayer();if(!name)return false;
+ const name=activeLayer();
+ if(!name)return false;
  if(name==='picker')closePicker();
  else if(name==='income')$('incomeClose').click();
  else if(name==='chooser')$('closeIncomeChooser').click();
@@ -23,44 +24,74 @@ function closeTop(){
  return true;
 }
 window.v2AnyLayerOpen=()=>!!activeLayer();
-window.v2VisitTab=()=>{}; // User explicitly does not want back-button tab history.
-window.v2OpenLayer=()=>{}; // Modals use the single Back guard rather than history entries.
+window.v2VisitTab=()=>{}; // Tabs are NOT browser history entries.
+window.v2OpenLayer=()=>{};
 window.v2CloseLayer=()=>{};
-function showExit(){exitModal.classList.remove('hidden');exitCancel.focus({preventScroll:true})}
-function cancelExit(){exitModal.classList.add('hidden')}
+function showExit(){
+ if(exitModal.open)return;
+ exitModal.showModal(); // Android Back/Escape natively cancels this dialog.
+ exitCancel.focus({preventScroll:true});
+}
+function cancelExit(){
+ if(exitModal.open)exitModal.close('cancel');
+}
 exitCancel.addEventListener('click',cancelExit);
-exitModal.addEventListener('click',e=>{if(e.target===exitModal)cancelExit()});
-exitAccept.addEventListener('click',()=>{
- cancelExit();
- exiting=true;
- // A standalone PWA cannot always close itself via script. Try the direct close
- // first; then leave the history guard and use the browser's native back behavior.
- window.close();
- history.back();
-});
-const appUrl=location.pathname+location.search; // No tab hash history.
-history.replaceState({fixedBase:true},'',appUrl);
-history.pushState({fixedBackGuard:true},'',appUrl);
-window.addEventListener('popstate',()=>{
- if(exiting){
-  // Once the temporary guard has been removed, allow the native PWA back
-  // action from the base entry. Closing a PWA by script remains browser-dependent.
-  window.close();
-  history.back();
-  return;
+exitModal.addEventListener('click',e=>{
+ if(e.target===exitModal){
+  const r=exitModal.getBoundingClientRect();
+  if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)cancelExit();
  }
- if(!exitModal.classList.contains('hidden'))cancelExit();
- else if(!closeTop())showExit();
- // Re-arm the same guard without accumulating per-tab browser history.
- history.pushState({fixedBackGuard:true},'',appUrl);
 });
+exitModal.addEventListener('cancel',()=>{
+ // Native Android Back closes the exit dialog, NOT the underlying app.
+ exitApproved=false;
+});
+exitModal.addEventListener('close',()=>{if(!exitApproved)ensureCloseWatcher()});
+exitAccept.addEventListener('click',()=>{
+ exitApproved=true;
+ exitModal.close('confirm');
+ if(closeWatcher){closeWatcher.destroy();closeWatcher=null}
+ // Standalone PWA closing is browser-controlled; attempt to leave only after approval.
+ window.close();
+ history.go(-2);
+});
+// Modern Chrome intercepts Android Back with CloseWatcher, independent of tab history.
+// A modal <dialog> creates its own higher-priority close request while open.
+function ensureCloseWatcher(){
+ if(exitApproved||exitModal.open||closeWatcher||!('CloseWatcher' in window))return;
+ try{
+  const watcher=new CloseWatcher();
+  closeWatcher=watcher;
+  watcher.addEventListener('close',()=>{
+   if(closeWatcher===watcher)closeWatcher=null;
+   if(exitApproved||exitModal.open)return;
+   if(!closeTop())showExit();
+   // Do not install a watcher above the open native exit dialog.
+   if(!exitModal.open)ensureCloseWatcher();
+  });
+ }catch(e){console.warn('CloseWatcher unavailable:',e)}
+}
+// Keep one navigation guard as a fallback on browsers without working CloseWatcher.
+const appUrl=location.pathname+location.search;
+history.replaceState({fixedBase:true},'',appUrl);
+history.pushState({fixedGuard:true},'',appUrl);
+window.addEventListener('popstate',()=>{
+ if(exitApproved)return;
+ if(!exitModal.open){
+  if(!closeTop())showExit();
+ }
+ // Re-arm before the next Back so cancelling the dialog never exits the app.
+ history.pushState({fixedGuard:true},'',appUrl);
+});
+document.addEventListener('pointerdown',ensureCloseWatcher,{passive:true});
 document.addEventListener('keydown',e=>{
  if(e.key!=='Escape'&&e.key!=='Backspace')return;
  if(e.key==='Backspace'&&(/INPUT|TEXTAREA/.test(document.activeElement?.tagName)||document.activeElement?.isContentEditable))return;
- if(!exitModal.classList.contains('hidden')){e.preventDefault();cancelExit()}
- else if(activeLayer()){e.preventDefault();closeTop()}
+ if(exitModal.open)return; // Native dialog consumes this Back/Escape key.
+ if(activeLayer()){e.preventDefault();closeTop()}
  else if(e.key==='Escape'){e.preventDefault();showExit()}
 });
+ensureCloseWatcher();
 let selectedTarget=null,customInput=null;
 const v2Picker=$('v2Picker'),pickerList=$('v2PickerList'),pickerTitle=$('v2PickerTitle');
 function closePicker(){
