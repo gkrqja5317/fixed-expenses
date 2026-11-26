@@ -41,8 +41,17 @@ function paint(){
  $('incomeHomeFixed').textContent=fmt(h.fixed);
  $('incomeHomeBalance').textContent=fmt(h.expected-h.fixed);
 }
+const incomeNameOptions=['월급','부업','상여금','용돈','배당금','이자','임대 수입','환급금','중고거래','기타'];
+const incomeBankOptions=['국민은행','신한은행','우리은행','하나은행','카카오뱅크','토스뱅크','농협은행','기업은행','케이뱅크','신한카드','현대카드'];
+function updateSuggestions(){
+ const names=[...new Set([...incomeNameOptions,...data.recurring.map(x=>x.title),...data.extras.map(x=>x.title)])].filter(Boolean);
+ const banks=[...new Set([...incomeBankOptions,...data.recurring.map(x=>x.bank),...data.extras.map(x=>x.bank)])].filter(Boolean);
+ const escAttr=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&#39;'}[c]));
+ $('incomeTitleOptions').innerHTML=names.map(x=>'<option value="'+escAttr(x)+'"></option>').join('');
+ $('incomeBankOptions').innerHTML=banks.map(x=>'<option value="'+escAttr(x)+'"></option>').join('');
+}
 function openForm(type,id){
- edit={type,id:id||null};
+ updateSuggestions();edit={type,id:id||null};
  const record=type==='recurring'?data.recurring.find(x=>x.id===id):data.extras.find(x=>x.id===id);
  $('incomeFormTitle').textContent=id?'수입 수정':type==='recurring'?'고정 수입 추가':'추가 수입 등록';
  $('incomeType').value=type;
@@ -59,6 +68,7 @@ function openForm(type,id){
  $('incomeTitle').focus();
 }
 function closeForm(){$('incomeModal').classList.add('hidden');edit=null}
+function closeChooser(){$('incomeTypeChooser').classList.add('hidden')}
 function uid(){return (typeof crypto!=='undefined'&&crypto.randomUUID?.())||Date.now()+'-'+Math.random().toString(36).slice(2)}
 function saveForm(ev){
  ev.preventDefault();
@@ -109,9 +119,16 @@ function handleClick(ev){
 }
 function setup(){
  load();
+ updateSuggestions();
  $('incomeMonth').value=selected;
  $('incomeMonth').addEventListener('change',ev=>{if(/^\d{4}-\d{2}$/.test(ev.target.value)){selected=ev.target.value;paint()}});
  $('incomeAddRecurring').onclick=()=>openForm('recurring');
+ window.addEventListener('open-income-chooser',()=>{$('incomeTypeChooser').classList.remove('hidden')});
+ $('chooseRecurring').onclick=()=>{closeChooser();openForm('recurring')};
+ $('chooseExtra').onclick=()=>{closeChooser();openForm('extra')};
+ $('closeIncomeChooser').onclick=closeChooser;
+ $('incomeTypeChooser').addEventListener('click',e=>{if(e.target===$('incomeTypeChooser'))closeChooser()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeChooser()});
  $('incomeAddExtra').onclick=()=>openForm('extra');
  $('incomeClose').onclick=closeForm;
  $('incomeCancel').onclick=closeForm;
