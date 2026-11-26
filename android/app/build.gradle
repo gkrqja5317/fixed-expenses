@@ -8,8 +8,8 @@ android {
         applicationId 'com.gkrqja5317.fixedexpenses'
         minSdk 26
         targetSdk 35
-        versionCode 1
-        versionName '2.0.2-native-test'
+        versionCode 2
+        versionName '2.0.2-native-test.2'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

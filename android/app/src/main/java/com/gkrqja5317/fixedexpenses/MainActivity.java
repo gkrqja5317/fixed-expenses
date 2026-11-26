@@ -5,21 +5,21 @@ import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowInsets;
 import android.webkit.CookieManager;
+import android.webkit.JsPromptResult;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 import org.json.JSONArray;
-import java.io.InputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -32,7 +32,14 @@ public class MainActivity extends Activity {
     private WebView web;
     private ValueCallback<Uri[]> webFileCallback;
     private String pendingBackup;
-    private boolean quitDialogShown = false;
+    private boolean quitDialogShown;
+    private static final int SYSTEM_BAR_COLOR = 0xff101827;
+    private static final String EXIT_PROMPT = "fixed-expenses:exit";
+    private static final String EXPORT_PROMPT = "fixed-expenses:export";
+
+    private static boolean isHomePage(String url) {
+        return url != null && (HOME.equals(url) || (HOME + "index.html").equals(url));
+    }
 
     private static final String HANDLE_BACK_JS = "(function(){"
         + "const d=document.getElementById('exitConfirm');if(d&&d.open){d.close();return true;}"
@@ -41,15 +48,39 @@ public class MainActivity extends Activity {
         + "['menuDropdown','menuToggle','hidden']];"
         + "for(const [panel,button,cls] of checks){const p=document.getElementById(panel);"
         + "if(p&&(cls==='open'?p.classList.contains(cls):!p.classList.contains(cls))){"
-        + "document.getElementById(button)?.click();return true;}}return false;})()";
+        + "document.getElementById(button)?.click();return true;}}"
+        + "const cancel=document.getElementById('exitCancel'),accept=document.getElementById('exitAccept');"
+        + "if(!d||!cancel||!accept||typeof d.showModal!=='function')return false;"
+        + "cancel.onclick=(e)=>{e.stopImmediatePropagation();d.close();};"
+        + "accept.onclick=(e)=>{e.stopImmediatePropagation();d.close();window.prompt('" + EXIT_PROMPT + "');};"
+        + "d.showModal();cancel.focus();return true;})()";
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setStatusBarColor(0xff101827);
-        getWindow().setNavigationBarColor(0xff101827);
+        getWindow().setStatusBarColor(SYSTEM_BAR_COLOR);
+        getWindow().setNavigationBarColor(SYSTEM_BAR_COLOR);
+        getWindow().getDecorView().setSystemUiVisibility(
+            getWindow().getDecorView().getSystemUiVisibility()
+                & ~(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR));
         web = new WebView(this);
-        web.setBackgroundColor(0xff101827);
-        setContentView(web);
+        web.setBackgroundColor(SYSTEM_BAR_COLOR);
+
+        FrameLayout content = new FrameLayout(this);
+        content.setBackgroundColor(SYSTEM_BAR_COLOR);
+        content.addView(web, new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        if (Build.VERSION.SDK_INT >= 35) {
+            getWindow().setDecorFitsSystemWindows(false);
+            getWindow().setNavigationBarContrastEnforced(false);
+            content.setOnApplyWindowInsetsListener((view, insets) -> {
+                android.graphics.Insets padding = insets.getInsets(
+                    WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout()
+                    | WindowInsets.Type.ime());
+                view.setPadding(padding.left, padding.top, padding.right, padding.bottom);
+                return WindowInsets.CONSUMED;
+            });
+        }
+        setContentView(content);
         WebSettings settings = web.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -74,10 +105,30 @@ public class MainActivity extends Activity {
                 return true;
             }
             @Override public void onPageFinished(WebView view,String url) {
-                if(url.startsWith(HOME))invalidateOptionsMenu();
+                if (isHomePage(url)) {
+                    view.evaluateJavascript("(function(){const button=document.getElementById('exportBtn');"
+                        + "if(button)button.onclick=()=>{window.prompt('" + EXPORT_PROMPT + "');};})()", null);
+                }
             }
         });
         web.setWebChromeClient(new WebChromeClient() {
+            @Override public boolean onJsPrompt(WebView view, String url, String message,
+                String defaultValue, JsPromptResult result) {
+                if (!isHomePage(url) || !isHomePage(view.getUrl())) return false;
+                switch (message) {
+                    case EXIT_PROMPT:
+                        result.confirm();
+                        finishAndRemoveTask();
+                        return true;
+                    case EXPORT_PROMPT:
+                        result.confirm();
+                        exportBackup();
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+
             @Override public boolean onShowFileChooser(WebView view,ValueCallback<Uri[]> callback,FileChooserParams params){
                 if(webFileCallback!=null)webFileCallback.onReceiveValue(null);
                 webFileCallback=callback;
@@ -114,16 +165,6 @@ public class MainActivity extends Activity {
         dialog.show();
     }
 
-    @Override public boolean onCreateOptionsMenu(Menu menu){
-        menu.add(0,1,0,"JSON 백업 저장");
-        menu.add(0,2,1,"JSON 백업 불러오기");
-        return true;
-    }
-    @Override public boolean onOptionsItemSelected(MenuItem item){
-        if(item.getItemId()==1){exportBackup();return true;}
-        if(item.getItemId()==2){openImport();return true;}
-        return super.onOptionsItemSelected(item);
-    }
     private void exportBackup(){
         String script="(function(){try{const expenses=JSON.parse(localStorage.getItem('fixedExpenseApp_v1')||'[]');"
             +"const income=localStorage.getItem('fixedExpenseIncome_v1');"
@@ -141,12 +182,6 @@ public class MainActivity extends Activity {
             }catch(Exception e){Toast.makeText(this,"백업 생성에 실패했습니다.",Toast.LENGTH_LONG).show();}
         });
     }
-    private void openImport(){
-        Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        i.addCategory(Intent.CATEGORY_OPENABLE);
-        i.setType("application/json");
-        startActivityForResult(i,CHOOSE_IMPORT);
-    }
     @Override protected void onActivityResult(int request,int result,Intent data){
         super.onActivityResult(request,result,data);
         Uri uri=result==RESULT_OK&&data!=null?data.getData():null;
@@ -154,27 +189,6 @@ public class MainActivity extends Activity {
             if(webFileCallback!=null){
                 webFileCallback.onReceiveValue(uri==null?null:new Uri[]{uri});
                 webFileCallback=null;
-            }else if(uri!=null){
-                // Reuse the existing PWA JSON validation and confirmation dialog.
-                try(InputStream in=getContentResolver().openInputStream(uri)){
-                    if(in==null)throw new Exception("missing file");
-                    ByteArrayOutputStream buffer=new ByteArrayOutputStream();
-                    byte[] chunk=new byte[8192];
-                    int count;
-                    while((count=in.read(chunk))!=-1){
-                        if(buffer.size()+count>5_000_000)throw new Exception("file too large");
-                        buffer.write(chunk,0,count);
-                    }
-                    byte[] bytes=buffer.toByteArray();
-                    String json=new String(bytes,StandardCharsets.UTF_8);
-                    new org.json.JSONObject(json); // Reject non-JSON before passing to the web app.
-                    String escaped=org.json.JSONObject.quote(json);
-                    String js="(function(){const input=document.getElementById('importFile');"
-                        +"if(!input)return false;const file=new File(["+escaped+"],'backup.json',{type:'application/json'});"
-                        +"const dt=new DataTransfer();dt.items.add(file);input.files=dt.files;"
-                        +"input.dispatchEvent(new Event('change',{bubbles:true}));return true;})()";
-                    web.evaluateJavascript(js,resultText->{if(!"true".equals(resultText))Toast.makeText(this,"불러오기를 시작하지 못했습니다.",Toast.LENGTH_LONG).show();});
-                }catch(Exception e){Toast.makeText(this,"올바른 JSON 백업 파일을 선택하세요.",Toast.LENGTH_LONG).show();}
             }
         }else if(request==SAVE_BACKUP&&uri!=null&&pendingBackup!=null){
             try(OutputStream out=getContentResolver().openOutputStream(uri)){
