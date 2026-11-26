@@ -1,5 +1,5 @@
-const CACHE='fixed-expenses-v1.3.0-income-module';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./version.json','./push-config.js','./income.js','./income.css','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE='fixed-expenses-v1.3.1-menu-income-icon';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./version.json','./push-config.js','./income.js','./income.css','./icons/icon-192.png','./icons/icon-512.svg'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('fixed-expenses-')&&k!==CACHE).map(k=>caches.delete(k)))),self.clients.claim()]))});
 self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting()});
