@@ -1,4 +1,4 @@
-const CACHE='fixed-expenses-v2.0.1-back-and-circular-swipe';
+const CACHE='fixed-expenses-v2.0.2-native-back-reverse-swipe';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./version.json','./push-config.js','./income.js','./income.css','./v2-ui.js','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('fixed-expenses-')&&k!==CACHE).map(k=>caches.delete(k)))),self.clients.claim()]))});
