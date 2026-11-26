@@ -19,6 +19,7 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 import org.json.JSONArray;
 import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -157,8 +158,14 @@ public class MainActivity extends Activity {
                 // Reuse the existing PWA JSON validation and confirmation dialog.
                 try(InputStream in=getContentResolver().openInputStream(uri)){
                     if(in==null)throw new Exception("missing file");
-                    byte[] bytes=in.readNBytes(5_000_001);
-                    if(bytes.length>5_000_000)throw new Exception("file too large");
+                    ByteArrayOutputStream buffer=new ByteArrayOutputStream();
+                    byte[] chunk=new byte[8192];
+                    int count;
+                    while((count=in.read(chunk))!=-1){
+                        if(buffer.size()+count>5_000_000)throw new Exception("file too large");
+                        buffer.write(chunk,0,count);
+                    }
+                    byte[] bytes=buffer.toByteArray();
                     String json=new String(bytes,StandardCharsets.UTF_8);
                     new org.json.JSONObject(json); // Reject non-JSON before passing to the web app.
                     String escaped=org.json.JSONObject.quote(json);
