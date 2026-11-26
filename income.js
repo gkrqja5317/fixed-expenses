@@ -52,15 +52,17 @@ function openForm(type,id){
  $('incomeDay').value=record?.day||25;
  $('incomeDate').value=record?.date||new Date().toLocaleDateString('sv-SE');
  $('incomeRecurringFields').hidden=type!=='recurring';
+ $('incomeDay').disabled=type!=='recurring';
  $('incomeExtraFields').hidden=type!=='extra';
+ $('incomeDate').disabled=type!=='extra';
  $('incomeModal').classList.remove('hidden');
  $('incomeTitle').focus();
 }
 function closeForm(){$('incomeModal').classList.add('hidden');edit=null}
-function uid(){return crypto?.randomUUID?.()||Date.now()+'-'+Math.random().toString(36).slice(2)}
+function uid(){return (typeof crypto!=='undefined'&&crypto.randomUUID?.())||Date.now()+'-'+Math.random().toString(36).slice(2)}
 function saveForm(ev){
  ev.preventDefault();
- const type=edit?.type;
+ const type=edit?.type;if(!type)return;
  const title=$('incomeTitle').value.trim(),bank=$('incomeBank').value.trim();
  const amount=Number($('incomeAmount').value),day=Number($('incomeDay').value),date=$('incomeDate').value;
  if(!title||!bank||!Number.isSafeInteger(amount)||amount<=0){alert('수입 이름, 은행, 올바른 금액을 입력하세요.');return}
