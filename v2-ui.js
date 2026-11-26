@@ -35,7 +35,7 @@ window.v2OpenLayer=name=>{
 window.v2CloseLayer=name=>{
  if(layerStack[layerStack.length-1]===name){
   layerStack.pop();
-  if(!duringPop)history.back();
+  if(!duringPop)history.replaceState({v2Tab:currentTab},'',location.href);
  }else layerStack=layerStack.filter(x=>x!==name);
 };
 history.replaceState({v2Tab:'home'},'',location.href);
@@ -45,7 +45,7 @@ window.addEventListener('popstate',e=>{
  if(prev){
   const current=activeLayer();
   if(current)closeTop();
-  layerStack.pop();
+  if(layerStack[layerStack.length-1]===prev)layerStack.pop();
  }else {
   const target=e.state?.v2Tab;
   if(tabs.includes(target)){
