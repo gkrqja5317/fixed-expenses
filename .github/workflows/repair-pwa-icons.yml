@@ -1,0 +1,30 @@
+name: Repair PWA icon sizes for v1.3.2
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/repair-pwa-icons.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  repair_icons:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generate correct 512px PNG and update manifest metadata
+        run: |
+          python -m pip install --disable-pip-version-check Pillow
+          python scripts/repair-pwa-icons.py
+      - name: Commit tested icon assets and bump patch version
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add icons/icon-512.png manifest.webmanifest index.html sw.js version.json
+          git diff --cached --check
+          git commit -m "Fix PWA icon 512px PNG and release v1.3.2"
+          git push
