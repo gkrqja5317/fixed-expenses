@@ -21,7 +21,13 @@ jobs:
           distribution: temurin
           java-version: '17'
       - name: Install Android API 35
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+        run: |
+          sdk_root="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          if [[ -f "$sdk_root/platforms/android-35/android.jar" && -x "$sdk_root/build-tools/35.0.0/aapt2" ]]; then
+            exit 0
+          fi
+          sdkmanager=$(find "$sdk_root/cmdline-tools" -path '*/bin/sdkmanager' -print | sort -V | tail -n 1)
+          "${sdkmanager:?Android SDK command-line tools are missing}" 'platforms;android-35' 'build-tools;35.0.0'
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
