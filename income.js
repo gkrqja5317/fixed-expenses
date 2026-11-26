@@ -20,6 +20,8 @@ const key=(r,m)=>r.id+'|'+m;
 function totals(m){const recurring=data.recurring.filter(r=>activeInMonth(r,m));const extras=data.extras.filter(x=>x.date.slice(0,7)===m);const scheduled=recurring.reduce((s,x)=>s+x.amount,0);const confirmed=recurring.reduce((s,x)=>s+(data.receipts[key(x,m)]==='received'?x.amount:0),0);const once=extras.reduce((s,x)=>s+x.amount,0);return {recurring,extras,scheduled,confirmed,once,expected:scheduled+once,actual:confirmed+once,fixed:fixedTotal()}}
 function labelMonth(m){const a=m.split('-');return a[0]+'년 '+Number(a[1])+'월'}
 function paint(){
+ const homeHidden=localStorage.getItem('fixedExpenseApp_hideTotal')==='true';
+ const homeFmt=n=>homeHidden?'••••••원':fmt(n);
  const t=totals(selected);
  $('incomeMonth').value=selected;
  $('incomeExpected').textContent=fmt(t.expected);
@@ -36,10 +38,10 @@ function paint(){
  // The homepage keeps the existing expense chart and adds a month-specific summary.
  $('incomeHomeMonth').textContent=labelMonth(monthNow);
  const h=totals(monthNow);
- $('incomeHomeExpected').textContent=fmt(h.expected);
- $('incomeHomeActual').textContent=fmt(h.actual);
- $('incomeHomeFixed').textContent=fmt(h.fixed);
- $('incomeHomeBalance').textContent=fmt(h.expected-h.fixed);
+ $('incomeHomeExpected').textContent=homeFmt(h.expected);
+ $('incomeHomeActual').textContent=homeFmt(h.actual);
+ $('incomeHomeFixed').textContent=homeFmt(h.fixed);
+ $('incomeHomeBalance').textContent=homeFmt(h.expected-h.fixed);
 }
 const incomeNameOptions=['월급','부업','상여금','용돈','배당금','이자','임대 수입','환급금','중고거래','기타'];
 const incomeBankOptions=['국민은행','신한은행','우리은행','하나은행','카카오뱅크','토스뱅크','농협은행','기업은행','케이뱅크','신한카드','현대카드'];
@@ -65,10 +67,11 @@ function openForm(type,id){
  $('incomeExtraFields').hidden=type!=='extra';
  $('incomeDate').disabled=type!=='extra';
  $('incomeModal').classList.remove('hidden');
- $('incomeTitle').focus();
+ window.v2ResetInputs?.();window.v2OpenLayer?.('income');
+ // The name field starts in selection mode to avoid opening the keyboard over the choices.
 }
-function closeForm(){$('incomeModal').classList.add('hidden');edit=null}
-function closeChooser(){$('incomeTypeChooser').classList.add('hidden')}
+function closeForm(){$('incomeModal').classList.add('hidden');edit=null;window.v2CloseLayer?.('income')}
+function closeChooser(){$('incomeTypeChooser').classList.add('hidden');window.v2CloseLayer?.('chooser')}
 function uid(){return (typeof crypto!=='undefined'&&crypto.randomUUID?.())||Date.now()+'-'+Math.random().toString(36).slice(2)}
 function saveForm(ev){
  ev.preventDefault();
@@ -123,7 +126,7 @@ function setup(){
  $('incomeMonth').value=selected;
  $('incomeMonth').addEventListener('change',ev=>{if(/^\d{4}-\d{2}$/.test(ev.target.value)){selected=ev.target.value;paint()}});
  $('incomeAddRecurring').onclick=()=>openForm('recurring');
- window.addEventListener('open-income-chooser',()=>{$('incomeTypeChooser').classList.remove('hidden')});
+ window.addEventListener('open-income-chooser',()=>{$('incomeTypeChooser').classList.remove('hidden');window.v2OpenLayer?.('chooser')});
  $('chooseRecurring').onclick=()=>{closeChooser();openForm('recurring')};
  $('chooseExtra').onclick=()=>{closeChooser();openForm('extra')};
  $('closeIncomeChooser').onclick=closeChooser;
@@ -136,6 +139,7 @@ function setup(){
  $('incomeModal').addEventListener('click',ev=>{if(ev.target===$('incomeModal'))closeForm()});
  $('incomePanel').addEventListener('click',handleClick);
  window.addEventListener('fixed-expenses-changed',paint);
+ window.addEventListener('fixed-money-visibility',paint);
  window.addEventListener('storage',ev=>{if(ev.key===KEY||ev.key==='fixedExpenseApp_v1'){load();paint()}});
  paint();
 }
