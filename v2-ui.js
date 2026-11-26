@@ -1,8 +1,10 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const tabs=['home','income','bank','purpose','list'];
-let currentTab='home',duringPop=false,layerStack=[];
+// A single guard entry intercepts Android Back; tab visits never create history.
+let exiting=false;
+const exitModal=$('exitConfirm');
+const exitCancel=$('exitCancel'),exitAccept=$('exitAccept');
 const activeLayer=()=>{
  if(!$('v2Picker').classList.contains('hidden'))return 'picker';
  if(!$('incomeModal').classList.contains('hidden'))return 'income';
@@ -11,7 +13,6 @@ const activeLayer=()=>{
  if(!$('menuDropdown').classList.contains('hidden'))return 'menu';
  return null;
 };
-function layerClosed(name){return activeLayer()!==name}
 function closeTop(){
  const name=activeLayer();if(!name)return false;
  if(name==='picker')closePicker();
@@ -22,44 +23,37 @@ function closeTop(){
  return true;
 }
 window.v2AnyLayerOpen=()=>!!activeLayer();
-window.v2VisitTab=id=>{
- if(!tabs.includes(id))return;
- currentTab=id;
- if(!duringPop)history.pushState({v2Tab:id},'','#'+id);
-};
-window.v2OpenLayer=name=>{
- if(duringPop||layerStack[layerStack.length-1]===name)return;
- layerStack.push(name);
- history.pushState({v2Tab:currentTab,v2Layer:name},'');
-};
-window.v2CloseLayer=name=>{
- if(layerStack[layerStack.length-1]===name){
-  layerStack.pop();
-  if(!duringPop)history.replaceState({v2Tab:currentTab},'',location.href);
- }else layerStack=layerStack.filter(x=>x!==name);
-};
-history.replaceState({v2Tab:'home'},'',location.href);
-window.addEventListener('popstate',e=>{
- duringPop=true;
- const prev=layerStack[layerStack.length-1];
- if(prev){
-  const current=activeLayer();
-  if(current)closeTop();
-  if(layerStack[layerStack.length-1]===prev)layerStack.pop();
- }else {
-  const target=e.state?.v2Tab;
-  if(tabs.includes(target)){
-   currentTab=target;
-   document.getElementById('tabbtn-'+target)?.click();
-  }else {
-   currentTab='home';
-   $('tabbtn-home')?.click();
-  }
- }
- duringPop=false;
+window.v2VisitTab=()=>{}; // User explicitly does not want back-button tab history.
+window.v2OpenLayer=()=>{}; // Modals use the single Back guard rather than history entries.
+window.v2CloseLayer=()=>{};
+function showExit(){exitModal.classList.remove('hidden');exitCancel.focus({preventScroll:true})}
+function cancelExit(){exitModal.classList.add('hidden')}
+exitCancel.addEventListener('click',cancelExit);
+exitModal.addEventListener('click',e=>{if(e.target===exitModal)cancelExit()});
+exitAccept.addEventListener('click',()=>{
+ cancelExit();
+ exiting=true;
+ // A standalone PWA cannot always close itself via script. Try the direct close
+ // first; then leave the history guard and use the browser's native back behavior.
+ window.close();
+ history.go(-2);
+});
+const appUrl=location.pathname+location.search; // No tab hash history.
+history.replaceState({fixedBase:true},'',appUrl);
+history.pushState({fixedBackGuard:true},'',appUrl);
+window.addEventListener('popstate',()=>{
+ if(exiting)return;
+ if(!exitModal.classList.contains('hidden'))cancelExit();
+ else if(!closeTop())showExit();
+ // Re-arm the same guard without accumulating per-tab browser history.
+ history.pushState({fixedBackGuard:true},'',appUrl);
 });
 document.addEventListener('keydown',e=>{
- if(e.key==='Escape'&&activeLayer()){e.preventDefault();closeTop();}
+ if(e.key!=='Escape'&&e.key!=='Backspace')return;
+ if(e.key==='Backspace'&&(/INPUT|TEXTAREA/.test(document.activeElement?.tagName)||document.activeElement?.isContentEditable))return;
+ if(!exitModal.classList.contains('hidden')){e.preventDefault();cancelExit()}
+ else if(activeLayer()){e.preventDefault();closeTop()}
+ else if(e.key==='Escape'){e.preventDefault();showExit()}
 });
 let selectedTarget=null,customInput=null;
 const v2Picker=$('v2Picker'),pickerList=$('v2PickerList'),pickerTitle=$('v2PickerTitle');
