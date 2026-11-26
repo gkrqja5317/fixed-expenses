@@ -1,0 +1,30 @@
+.income-home-card{background:#fff;border-radius:16px;padding:16px;margin:0 0 16px;box-shadow:0 4px 24px rgba(30,45,80,.06)}
+.income-home-grid,.income-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.income-stat{background:#f3f6fb;border-radius:12px;padding:13px;min-width:0}
+.income-stat small{display:block;color:#63728a;font-size:12px;margin-bottom:6px}
+.income-stat strong{font-size:clamp(14px,3.8vw,19px);overflow-wrap:anywhere;color:#172238}
+.income-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.income-head h2{font-size:18px;color:#172238;margin:0}
+.income-head input{max-width:145px;border:1px solid #dce4ef;border-radius:10px;background:#fff;padding:9px;color:#172238}
+.income-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
+.income-actions button,.income-form button[type=submit]{background:#3568ec;color:white;border:0;border-radius:12px;padding:13px;font-weight:700}
+.income-card{background:white;border-radius:16px;padding:16px;margin:14px 0;box-shadow:0 4px 24px rgba(30,45,80,.06)}
+.income-card h3{margin:0 0 12px;font-size:16px;color:#172238}
+.income-row{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-top:1px solid #e9edf4;align-items:center;font-size:14px;color:#172238}
+.income-row strong{overflow-wrap:anywhere}
+.income-row-right{text-align:right;min-width:120px}
+.income-muted,.income-empty{color:#687891;font-size:12px;margin-top:5px}
+.income-buttons{display:flex;gap:4px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}
+.income-buttons button{background:#f0f4fb;color:#425476;border:1px solid #dbe3ef;border-radius:8px;font-size:11px;padding:6px}
+.income-ratio{background:#e9edf4;height:10px;border-radius:20px;overflow:hidden}
+#incomeRatioBar{background:#4169e8;height:100%;display:block}
+.income-modal{position:fixed;inset:0;z-index:99;background:rgba(12,18,32,.65);display:grid;place-items:end center;padding:12px}
+.income-modal[hidden],.income-modal.hidden{display:none}
+.income-dialog{background:#fff;border-radius:20px;width:min(100%,540px);max-height:88vh;overflow:auto;padding:20px;color:#172238}
+.income-dialog label{display:grid;gap:5px;margin:11px 0;font-size:13px;font-weight:600}
+.income-dialog input{border:1px solid #dce4ef;border-radius:10px;padding:11px;font-size:16px;min-width:0}
+.income-dialog .income-dialog-actions{display:flex;gap:8px;margin-top:15px}
+.income-dialog .income-dialog-actions button{flex:1;border:1px solid #dce4ef;border-radius:12px;padding:13px}
+.income-note{font-size:12px;color:#63728a;line-height:1.5}
+.bottom .tabnav{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+.bottom .tabnav .tab{font-size:clamp(10px,2.4vw,12px);padding:10px 2px}
